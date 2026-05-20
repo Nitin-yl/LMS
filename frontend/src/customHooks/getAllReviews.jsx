@@ -17,7 +17,10 @@ const getAllReviews = () => {
         dispatch(setAllReview(result.data))
         
       } catch (error) {
-        console.log(error)
+        // 400 is expected when user is not authenticated
+        if(error.response?.status !== 400) {
+          console.error("Failed to fetch reviews:", error)
+        }
       }
     }
     getAllReviews()

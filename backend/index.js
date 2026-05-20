@@ -1,6 +1,7 @@
 import express from "express"
 import dotenv from "dotenv"
 import connectDb from "./configs/db.js"
+import seedCourses from "./configs/seedCourses.js"
 import authRouter from "./routes/authRoute.js"
 import cookieParser from "cookie-parser"
 import cors from "cors"
@@ -11,7 +12,7 @@ import aiRouter from "./routes/aiRoute.js"
 import reviewRouter from "./routes/reviewRoute.js"
 dotenv.config()
 
-let port = process.env.PORT
+let port = process.env.PORT || 8000
 let app = express()
 app.use(express.json())
 app.use(cookieParser())
@@ -31,8 +32,9 @@ app.get("/" , (req,res)=>{
     res.send("Hello From Server")
 })
 
-app.listen(port , ()=>{
-    console.log("Server Started")
-    connectDb()
+app.listen(port , async ()=>{
+    console.log(`Server Started on port ${port}`)
+    await connectDb()
+    await seedCourses()
 })
 

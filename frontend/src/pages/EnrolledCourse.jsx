@@ -7,6 +7,10 @@ import { FaArrowLeftLong } from "react-icons/fa6";
 
 function EnrolledCourse() {
   const navigate = useNavigate()
+  const handleGoBack = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/");
+  };
 
   const { userData } = useSelector((state) => state.user);
 
@@ -18,7 +22,7 @@ function EnrolledCourse() {
     <div className="min-h-screen w-full px-4 py-9 bg-gray-50">
       
 
-      <FaArrowLeftLong  className='absolute top-[3%] md:top-[6%] left-[5%] w-[22px] h-[22px] cursor-pointer' onClick={()=>navigate("/")}/>
+      <FaArrowLeftLong  className='absolute top-[3%] md:top-[6%] left-[5%] w-[22px] h-[22px] cursor-pointer' onClick={handleGoBack}/>
       <h1 className="text-3xl text-center font-bold text-gray-800 mb-6  ">
         My Enrolled Courses
       </h1>

@@ -1,12 +1,13 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
+import axios from 'axios'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import SignUp from './pages/SignUp'
 import { ToastContainer} from 'react-toastify';
 import ForgotPassword from './pages/ForgotPassword'
-import getCurrentUser from './customHooks/getCurrentUser'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
+import { setUserData } from './redux/userSlice'
 import Profile from './pages/Profile'
 import EditProfile from './pages/EditProfile'
 import Dashboard from './pages/admin/Dashboard'
@@ -26,16 +27,41 @@ import ViewLecture from './pages/ViewLecture'
 import SearchWithAi from './pages/SearchWithAi'
 import getAllReviews from './customHooks/getAllReviews'
 
-export const serverUrl = "http://localhost:8000"
+export const serverUrl = import.meta.env.VITE_SERVER_URL || "http://localhost:8000"
 
 function App() {
-  
-  let {userData} = useSelector(state=>state.user)
+  const dispatch = useDispatch()
+  const { userData } = useSelector(state => state.user)
+  const [authLoading, setAuthLoading] = useState(true)
 
-  getCurrentUser()
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const result = await axios.get(serverUrl + "/api/user/currentuser", { withCredentials: true })
+        dispatch(setUserData(result.data))
+      } catch (error) {
+        console.error("Failed to fetch current user:", error)
+        dispatch(setUserData(null))
+      } finally {
+        setAuthLoading(false)
+      }
+    }
+
+    fetchCurrentUser()
+  }, [dispatch])
+
   getCouseData()
   getCreatorCourseData()
   getAllReviews()
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 text-gray-800">
+        Loading authentication...
+      </div>
+    )
+  }
+
   return (
     <>
     

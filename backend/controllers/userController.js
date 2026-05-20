@@ -3,14 +3,19 @@ import User from "../models/userModel.js";
 
 export const getCurrentUser = async (req,res) => {
     try {
+        // If no userId (no token), return null
+        if (!req.userId) {
+            return res.status(200).json(null)
+        }
+
         const user = await User.findById(req.userId).select("-password").populate("enrolledCourses")
-         if(!user){
-            return res.status(400).json({message:"user does not found"})
+        if(!user){
+            return res.status(200).json(null)
         }
         return res.status(200).json(user)
     } catch (error) {
         console.log(error);
-        return res.status(400).json({message:"get current user error"})
+        return res.status(200).json(null)
     }
 }
 

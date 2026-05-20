@@ -19,41 +19,61 @@ function SearchWithAi() {
   }
 
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const recognition = new SpeechRecognition();
+  const recognition = SpeechRecognition ? new SpeechRecognition() : null;
 
-  if (!recognition) {
+  if (!SpeechRecognition) {
     console.log("Speech recognition not supported");
   }
 
   const handleSearch = async () => {
+    if (!recognition) {
+      if (input.trim()) {
+        await handleRecommendation(input);
+      }
+      return;
+    }
 
-    if (!recognition) return;
-    setListening(true)
-    startSound.play()
+    setListening(true);
+    startSound.play();
     recognition.start();
+
     recognition.onresult = async (e) => {
       const transcript = e.results[0][0].transcript.trim();
       setInput(transcript);
       await handleRecommendation(transcript);
     };
-  
-      
-    
+
+    recognition.onend = () => {
+      setListening(false);
+    };
+
+    recognition.onerror = () => {
+      setListening(false);
+    };
   };
 
   const handleRecommendation = async (query) => {
+    if (!query || !query.trim()) {
+      setRecommendations([]);
+      setListening(false);
+      return;
+    }
+
     try {
       const result = await axios.post(`${serverUrl}/api/ai/search`, { input: query }, { withCredentials: true });
-      setRecommendations(result.data);
-      if(result.data.length>0){
- speak("These are the top courses I found for you")
-      }else{
-         speak("No courses found")
+      const courses = result.data || [];
+      setRecommendations(courses);
+      if (courses.length > 0) {
+        speak("These are the top courses I found for you");
+      } else {
+        speak("No courses found");
       }
-     
-      setListening(false)
     } catch (error) {
-      console.log(error);
+      console.error(error);
+      setRecommendations([]);
+      speak("Something went wrong. Please try again.");
+    } finally {
+      setListening(false);
     }
   };
 
@@ -62,7 +82,7 @@ function SearchWithAi() {
       
       {/* Search Container */}
       <div className="bg-white shadow-xl rounded-3xl p-6 sm:p-8 w-full max-w-2xl text-center relative">
-        <FaArrowLeftLong  className='text-[black] w-[22px] h-[22px] cursor-pointer absolute' onClick={()=>navigate("/")}/>
+        <FaArrowLeftLong  className='text-[black] w-[22px] h-[22px] cursor-pointer absolute' onClick={() => { if (window.history.length > 1) navigate(-1); else navigate("/"); }}/>
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-600 mb-6 flex items-center justify-center gap-2">
           <img src={ai} className='w-8 h-8 sm:w-[30px] sm:h-[30px]' alt="AI" />
           Search with <span className='text-[#CB99C7]'>AI</span>

@@ -27,22 +27,41 @@ function ViewCourse() {
    const [isEnrolled, setIsEnrolled] = useState(false);
    const [rating, setRating] = useState(0);
    const [comment, setComment] = useState("");
+   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
    
    
   
 
 
-  const handleReview = async () => {
-    try {
-      const result = await axios.post(serverUrl + "/api/review/givereview" , {rating , comment , courseId} , {withCredentials:true})
-      toast.success("Review Added")
-      console.log(result.data)
-      setRating(0)
-      setComment("")
+  const handleGoBack = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/");
+  };
 
+  const handleReview = async () => {
+    if (!rating || rating < 1 || !comment.trim()) {
+      toast.error("Please select a rating and add a comment before submitting.");
+      return;
+    }
+
+    setIsSubmittingReview(true);
+    try {
+      const result = await axios.post(serverUrl + "/api/review/givereview", { rating, comment, courseId }, { withCredentials: true });
+      toast.success("Review Added");
+      console.log(result.data);
+      setRating(0);
+      setComment("");
+      dispatch(
+        setSelectedCourseData({
+          ...selectedCourseData,
+          reviews: [...(selectedCourseData?.reviews || []), result.data],
+        })
+      );
     } catch (error) {
-      console.log(error)
-      toast.error(error.response.data.message)
+      console.log(error);
+      toast.error(error?.response?.data?.message || "Unable to submit review. Please try again.");
+    } finally {
+      setIsSubmittingReview(false);
     }
   }
   
@@ -58,75 +77,61 @@ function ViewCourse() {
 const avgRating = calculateAverageRating(selectedCourseData?.reviews);
 console.log("Average Rating:", avgRating);
 
-  
+  const fetchCourseData = () => {
+    const course = courseData.find((item) => item._id === courseId);
+    if (course) {
+      dispatch(setSelectedCourseData(course));
+    }
+  };
 
-  const fetchCourseData = async () => {
-    courseData.map((item) => {
-      if (item._id === courseId) {
-      dispatch(setSelectedCourseData(item))
-        console.log(selectedCourseData)
-      
+  const checkEnrollment = () => {
+    const verify = userData?.enrolledCourses?.some((c) => {
+      const enrolledId = typeof c === 'string' ? c : c._id;
+      return enrolledId?.toString() === courseId?.toString();
+    });
 
-        return null;
-      }
+    console.log("Enrollment verified:", verify);
+    setIsEnrolled(verify);
+  };
 
-    })
-
-  }
-    const checkEnrollment = () => {
-  const verify = userData?.enrolledCourses?.some(c => {
-    const enrolledId = typeof c === 'string' ? c : c._id;
-    return enrolledId?.toString() === courseId?.toString();
-  });
-
-  console.log("Enrollment verified:", verify);
-  if (verify) {
-    setIsEnrolled(true);
-  }
-};
   useEffect(() => {
-    fetchCourseData()
-    checkEnrollment()
-  }, [courseId,courseData,lectureData])
+    fetchCourseData();
+    checkEnrollment();
+  }, [courseId, courseData, lectureData, userData]);
 
 
     // Fetch creator info once course data is available
   useEffect(() => {
     const getCreator = async () => {
-      if (selectedCourseData?.creator) {
-        try {
-          const result = await axios.post(
-            `${serverUrl}/api/course/getcreator`,
-            { userId: selectedCourseData.creator },
-            { withCredentials: true }
-          );
-          setCreatorData(result.data);
-          console.log(result.data)
-        } catch (error) {
-          console.error("Error fetching creator:", error);
-        }
+      if (!selectedCourseData?.creator) {
+        setCreatorData(null);
+        return;
+      }
+
+      try {
+        const result = await axios.post(
+          `${serverUrl}/api/course/getcreator`,
+          { userId: selectedCourseData.creator },
+          { withCredentials: true }
+        );
+        setCreatorData(result.data);
+        console.log(result.data);
+      } catch (error) {
+        console.error("Error fetching creator:", error);
       }
     };
 
     getCreator();
-
-    
   }, [selectedCourseData]);
 
-
-   
-
-
   useEffect(() => {
-  if (creatorData?._id && courseData.length > 0) {
-    const creatorCourses = courseData.filter(
-      (course) =>
-        course.creator === creatorData._id && course._id !== courseId // Exclude current course
-    );
-    setSelectedCreatorCourse(creatorCourses);
-  
-  }
-}, [creatorData, courseData]);
+    if (creatorData?._id && courseData.length > 0) {
+      const creatorCourses = courseData.filter((course) =>
+        course.creator?.toString() === creatorData._id?.toString() && course._id !== courseId
+      );
+      setSelectedCreatorCourse(creatorCourses);
+    }
+  }, [creatorData, courseData, courseId]);
 
  
 const handleEnroll = async (courseId, userId) => {
@@ -181,7 +186,7 @@ setIsEnrolled(true)
              
           {/* Thumbnail */}
           <div className="w-full md:w-1/2">
-             <FaArrowLeftLong  className='text-[black] w-[22px] h-[22px] cursor-pointer' onClick={()=>navigate("/")}/>
+             <FaArrowLeftLong  className='text-[black] w-[22px] h-[22px] cursor-pointer' onClick={handleGoBack}/>
             {selectedCourseData?.thumbnail ? <img
               src={selectedCourseData?.thumbnail}
               alt="Course Thumbnail"
@@ -329,10 +334,11 @@ setIsEnrolled(true)
         rows="3"
       />
       <button
-        
-        className="bg-black text-white mt-3 px-4 py-2 rounded hover:bg-gray-800" onClick={handleReview}
+        className="bg-black text-white mt-3 px-4 py-2 rounded hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-400"
+        onClick={handleReview}
+        disabled={isSubmittingReview}
       >
-        Submit Review
+        {isSubmittingReview ? "Submitting..." : "Submit Review"}
       </button>
     </div>
 

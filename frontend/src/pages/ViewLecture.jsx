@@ -14,6 +14,10 @@ function ViewLecture() {
     selectedCourse?.lectures?.[0] || null
   );
   const navigate = useNavigate()
+  const handleGoBack = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/");
+  };
   const courseCreator = userData?._id === selectedCourse?.creator ? userData : null;
 
 
@@ -25,7 +29,7 @@ function ViewLecture() {
         {/* Course Details */}
         <div className="mb-6" >
            
-          <h1 className="text-2xl font-bold flex items-center justify-start gap-[20px]  text-gray-800"><FaArrowLeftLong  className=' text-black w-[22px] h-[22px] cursor-pointer' onClick={()=>navigate("/")}/>{selectedCourse?.title}</h1>
+          <h1 className="text-2xl font-bold flex items-center justify-start gap-[20px]  text-gray-800"><FaArrowLeftLong  className=' text-black w-[22px] h-[22px] cursor-pointer' onClick={handleGoBack}/>{selectedCourse?.title}</h1>
           
           <div className="mt-2 flex gap-4 text-sm text-gray-500 font-medium">
             <span>Category: {selectedCourse?.category}</span>

@@ -10,6 +10,7 @@ const getCreatorCourseData = () => {
     const {userData} = useSelector(state=>state.user)
   return (
     useEffect(()=>{
+    if(!userData) return; // Skip if user not logged in
     const getCreatorData = async () => {
       try {
         const result = await axios.get(serverUrl + "/api/course/getcreatorcourses" , {withCredentials:true})
@@ -20,8 +21,11 @@ const getCreatorCourseData = () => {
         console.log(result.data)
         
       } catch (error) {
-        console.log(error)
-        toast.error(error.response.data.message)
+        // 400 is expected when user is not logged in or lacks permission
+        if(error.response?.status !== 400) {
+          console.error("Failed to fetch creator courses:", error)
+          toast.error(error.response?.data?.message || "Failed to fetch courses")
+        }
       }
       
     }

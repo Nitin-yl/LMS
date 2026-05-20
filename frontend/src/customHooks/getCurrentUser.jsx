@@ -13,7 +13,7 @@ const getCurrentUser = ()=>{
                 dispatch(setUserData(result.data))
 
             } catch (error) {
-                console.log(error)
+                console.error("Failed to fetch user:", error)
                 dispatch(setUserData(null))
             }
         }

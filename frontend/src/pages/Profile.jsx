@@ -6,11 +6,15 @@ import { FaArrowLeftLong } from "react-icons/fa6";
 function Profile() {
   let {userData} = useSelector(state=>state.user)
   let navigate = useNavigate()
+  const handleGoBack = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/");
+  };
   return (
     <div className="min-h-screen bg-gray-100 px-4 py-10 flex items-center justify-center ">
       
       <div className="bg-white shadow-lg rounded-2xl p-8 max-w-xl w-full relative">
-        <FaArrowLeftLong  className='absolute top-[8%] left-[5%] w-[22px] h-[22px] cursor-pointer' onClick={()=>navigate("/")}/>
+        <FaArrowLeftLong  className='absolute top-[8%] left-[5%] w-[22px] h-[22px] cursor-pointer' onClick={handleGoBack}/>
         {/* Profile Header */}
         <div className="flex flex-col items-center text-center">
           {userData.photoUrl ? <img
